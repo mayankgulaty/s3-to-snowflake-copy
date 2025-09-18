@@ -95,13 +95,21 @@ public class MiniFileCopyApp {
         params.setCopyToSnowflake(copyToSnowflake.isEmpty() || copyToSnowflake.toLowerCase().startsWith("y"));
 
         if (params.isCopyToSnowflake()) {
-            System.out.print("Enter Snowflake table name: ");
-            params.setSnowflakeTableName(scanner.nextLine().trim());
+            System.out.print("Copy to Snowflake Table or Internal Stage? (table/stage, default: stage): ");
+            String copyType = scanner.nextLine().trim();
             
-            System.out.print("Enter Snowflake schema (default: LANDING): ");
-            String schema = scanner.nextLine().trim();
-            if (!schema.isEmpty()) {
-                params.setSnowflakeSchema(schema);
+            if (copyType.isEmpty() || copyType.toLowerCase().startsWith("stage")) {
+                System.out.print("Enter Snowflake Internal Stage path (e.g., @my_stage/folder/): ");
+                params.setSnowflakeStagePath(scanner.nextLine().trim());
+            } else {
+                System.out.print("Enter Snowflake table name: ");
+                params.setSnowflakeTableName(scanner.nextLine().trim());
+                
+                System.out.print("Enter Snowflake schema (default: LANDING): ");
+                String schema = scanner.nextLine().trim();
+                if (!schema.isEmpty()) {
+                    params.setSnowflakeSchema(schema);
+                }
             }
         }
 
@@ -137,6 +145,9 @@ public class MiniFileCopyApp {
                     break;
                 case "--target-path":
                     params.setTargetPath(args[++i]);
+                    break;
+                case "--snowflake-stage":
+                    params.setSnowflakeStagePath(args[++i]);
                     break;
                 case "--snowflake-table":
                     params.setSnowflakeTableName(args[++i]);
@@ -214,18 +225,22 @@ public class MiniFileCopyApp {
         System.out.println("  --access-key <key>          S3 access key");
         System.out.println("  --secret-key <key>          S3 secret key");
         System.out.println("  --target-path <path>        S3 target path");
-        System.out.println("  --snowflake-table <name>    Snowflake table name");
+        System.out.println("  --snowflake-stage <path>    Snowflake Internal Stage path (e.g., @my_stage/folder/)");
+        System.out.println("  --snowflake-table <name>    Snowflake table name (alternative to stage)");
         System.out.println("  --snowflake-schema <name>   Snowflake schema (default: LANDING)");
         System.out.println("  --s3-only                   Copy only to S3");
         System.out.println("  --snowflake-only            Copy only to Snowflake");
         System.out.println("  --help                      Show this help");
         System.out.println();
         System.out.println("Examples:");
-        System.out.println("  # Copy all CSV files from /data to S3 and Snowflake");
-        System.out.println("  java -cp . com.example.MiniFileCopyApp --source-path /data --file-patterns *.csv --bucket my-bucket --access-key AKIA... --secret-key ... --snowflake-table MY_FILES");
+        System.out.println("  # Copy all CSV files from /data to S3 and Snowflake Internal Stage");
+        System.out.println("  java -cp . com.example.MiniFileCopyApp --source-path /data --file-patterns *.csv --bucket my-bucket --access-key AKIA... --secret-key ... --snowflake-stage @my_stage/data/");
         System.out.println();
         System.out.println("  # Copy specific file to S3 only");
         System.out.println("  java -cp . com.example.MiniFileCopyApp --source-path /data --file-name data.csv --bucket my-bucket --access-key AKIA... --secret-key ... --s3-only");
+        System.out.println();
+        System.out.println("  # Copy files to Snowflake Internal Stage only");
+        System.out.println("  java -cp . com.example.MiniFileCopyApp --source-path /data --file-patterns *.txt,*.log --snowflake-stage @my_stage/logs/ --snowflake-only");
         System.out.println();
         System.out.println("  # Interactive mode");
         System.out.println("  java -cp . com.example.MiniFileCopyApp");

@@ -16,6 +16,7 @@ public class FileCopyParams {
     private List<String> filePatterns;
     private boolean copyToS3;
     private boolean copyToSnowflake;
+    private String snowflakeStagePath;
     private String snowflakeTableName;
     private String snowflakeSchema;
 
@@ -98,6 +99,14 @@ public class FileCopyParams {
         this.copyToSnowflake = copyToSnowflake;
     }
 
+    public String getSnowflakeStagePath() {
+        return snowflakeStagePath;
+    }
+
+    public void setSnowflakeStagePath(String snowflakeStagePath) {
+        this.snowflakeStagePath = snowflakeStagePath;
+    }
+
     public String getSnowflakeTableName() {
         return snowflakeTableName;
     }
@@ -123,6 +132,7 @@ public class FileCopyParams {
                 ", bucketName='" + bucketName + '\'' +
                 ", copyToS3=" + copyToS3 +
                 ", copyToSnowflake=" + copyToSnowflake +
+                ", snowflakeStagePath='" + snowflakeStagePath + '\'' +
                 ", snowflakeTableName='" + snowflakeTableName + '\'' +
                 ", snowflakeSchema='" + snowflakeSchema + '\'' +
                 '}';

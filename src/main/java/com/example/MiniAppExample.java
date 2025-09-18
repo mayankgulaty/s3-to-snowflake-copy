@@ -34,8 +34,7 @@ public class MiniAppExample {
         params.setAccessKey("your-access-key");      // Your S3 access key
         params.setSecretKey("your-secret-key");      // Your S3 secret key
         params.setTargetPath("uploads/data/");       // S3 target path (folders will be created automatically)
-        params.setSnowflakeTableName("MY_DATA_FILES"); // Snowflake table name
-        params.setSnowflakeSchema("LANDING");        // Snowflake schema
+        params.setSnowflakeStagePath("@my_stage/data/"); // Snowflake Internal Stage path
         
         // Both S3 and Snowflake copy are enabled by default
         params.setCopyToS3(true);
@@ -72,8 +71,7 @@ public class MiniAppExample {
         FileCopyParams params = new FileCopyParams();
         params.setSourcePath("/path/to/your/files");      // Change this to your actual path
         params.setFilePatterns(Arrays.asList("*.txt", "*.log", "*.json")); // Multiple patterns
-        params.setSnowflakeTableName("LOG_FILES");        // Snowflake table name
-        params.setSnowflakeSchema("LANDING");             // Snowflake schema
+        params.setSnowflakeStagePath("@my_stage/logs/");  // Snowflake Internal Stage path
         params.setCopyToS3(false);                        // Snowflake only
         params.setCopyToSnowflake(true);
         
@@ -137,7 +135,7 @@ public class MiniAppExample {
         params.setAccessKey("AKIA...");
         params.setSecretKey("...");
         params.setTargetPath("test-uploads/");
-        params.setSnowflakeTableName("TEST_FILES");
+        params.setSnowflakeStagePath("@my_stage/test/");
         
         // Create Snowflake config
         SnowflakeConfig snowflakeConfig = new SnowflakeConfig(

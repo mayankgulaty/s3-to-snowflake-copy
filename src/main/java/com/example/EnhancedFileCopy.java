@@ -126,10 +126,42 @@ public class EnhancedFileCopy {
     }
 
     /**
-     * Copy file to Snowflake
+     * Copy file to Snowflake (either to Internal Stage or Table)
      */
     private void copyFileToSnowflake(File file, String s3Key) throws IOException, SQLException {
-        logger.info("Copying file to Snowflake: {} -> table {}", file.getName(), params.getSnowflakeTableName());
+        if (params.getSnowflakeStagePath() != null && !params.getSnowflakeStagePath().isEmpty()) {
+            // Copy to Snowflake Internal Stage
+            copyFileToSnowflakeStage(file, s3Key);
+        } else if (params.getSnowflakeTableName() != null && !params.getSnowflakeTableName().isEmpty()) {
+            // Copy to Snowflake Table
+            copyFileToSnowflakeTable(file, s3Key);
+        } else {
+            throw new IllegalArgumentException("Either Snowflake stage path or table name must be specified");
+        }
+    }
+
+    /**
+     * Copy file to Snowflake Internal Stage
+     */
+    private void copyFileToSnowflakeStage(File file, String s3Key) throws IOException, SQLException {
+        logger.info("Copying file to Snowflake Internal Stage: {} -> {}", file.getName(), params.getSnowflakeStagePath());
+
+        // Read file content
+        byte[] fileContent = Files.readAllBytes(file.toPath());
+
+        // Upload to Snowflake Internal Stage
+        snowflakeService.uploadToStage(
+            params.getSnowflakeStagePath(),
+            file.getName(),
+            fileContent
+        );
+    }
+
+    /**
+     * Copy file to Snowflake Table
+     */
+    private void copyFileToSnowflakeTable(File file, String s3Key) throws IOException, SQLException {
+        logger.info("Copying file to Snowflake Table: {} -> table {}", file.getName(), params.getSnowflakeTableName());
 
         // Create table if it doesn't exist
         snowflakeService.createFileTable(params.getSnowflakeTableName());
@@ -228,8 +260,9 @@ public class EnhancedFileCopy {
         }
 
         if (params.isCopyToSnowflake()) {
-            if (params.getSnowflakeTableName() == null || params.getSnowflakeTableName().isEmpty()) {
-                throw new IllegalArgumentException("Snowflake table name is required for Snowflake copy");
+            if ((params.getSnowflakeStagePath() == null || params.getSnowflakeStagePath().isEmpty()) &&
+                (params.getSnowflakeTableName() == null || params.getSnowflakeTableName().isEmpty())) {
+                throw new IllegalArgumentException("Either Snowflake stage path or table name is required for Snowflake copy");
             }
         }
     }

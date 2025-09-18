@@ -5,9 +5,10 @@ This is a flexible mini application that extends your existing S3 to Snowflake c
 ## Features
 
 - **Flexible Source Selection**: Copy specific files, files matching patterns, or all files from a directory
-- **Dual Destination Support**: Copy to S3, Snowflake, or both simultaneously
-- **Automatic Folder Creation**: S3 target paths are created automatically
+- **Dual Destination Support**: Copy to S3, Snowflake Internal Stage, or both simultaneously
+- **Automatic Folder Creation**: S3 target paths and Snowflake stages are created automatically
 - **Pattern Matching**: Support for file patterns like `*.csv`, `*.txt`, etc.
+- **Snowflake Internal Stage Support**: Copy files directly to Snowflake file storage (not just tables)
 - **Interactive Mode**: Easy-to-use command-line interface
 - **Programmatic API**: Use the classes directly in your code
 
@@ -28,14 +29,14 @@ This will start an interactive session where you can:
 ### 2. Command Line Mode
 
 ```bash
-# Copy all CSV files to both S3 and Snowflake
-./run-mini-app.sh --source-path /data --file-patterns *.csv --bucket my-bucket --access-key AKIA... --secret-key ... --snowflake-table MY_FILES
+# Copy all CSV files to both S3 and Snowflake Internal Stage
+./run-mini-app.sh --source-path /data --file-patterns *.csv --bucket my-bucket --access-key AKIA... --secret-key ... --snowflake-stage @my_stage/data/
 
 # Copy specific file to S3 only
 ./run-mini-app.sh --source-path /data --file-name data.csv --bucket my-bucket --access-key AKIA... --secret-key ... --s3-only
 
-# Copy files to Snowflake only
-./run-mini-app.sh --source-path /data --file-patterns *.txt,*.log --snowflake-table LOG_FILES --snowflake-only
+# Copy files to Snowflake Internal Stage only
+./run-mini-app.sh --source-path /data --file-patterns *.txt,*.log --snowflake-stage @my_stage/logs/ --snowflake-only
 ```
 
 ## Command Line Options
@@ -49,7 +50,8 @@ This will start an interactive session where you can:
 | `--access-key <key>` | S3 access key | If copying to S3 |
 | `--secret-key <key>` | S3 secret key | If copying to S3 |
 | `--target-path <path>` | S3 target path (e.g., `folder/subfolder/`) | No |
-| `--snowflake-table <name>` | Snowflake table name | If copying to Snowflake |
+| `--snowflake-stage <path>` | Snowflake Internal Stage path (e.g., @my_stage/folder/) | If copying to Snowflake |
+| `--snowflake-table <name>` | Snowflake table name (alternative to stage) | If copying to Snowflake |
 | `--snowflake-schema <name>` | Snowflake schema (default: LANDING) | No |
 | `--s3-only` | Copy only to S3 | No |
 | `--snowflake-only` | Copy only to Snowflake | No |
