@@ -6,7 +6,7 @@ import software.amazon.awssdk.services.s3.model.S3Object;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -36,10 +36,7 @@ public class S3ToSnowflakeCopy {
                 return;
             }
 
-            // Create target table if it doesn't exist
-            snowflakeService.createFileTable(targetTableName);
-
-            // Get list of files from S3
+            // Get list of files from S3 based on patterns
             List<S3Object> s3Objects = s3Service.listObjects();
             logger.info("Found {} files in S3 bucket", s3Objects.size());
 
@@ -48,44 +45,37 @@ public class S3ToSnowflakeCopy {
                 return;
             }
 
-            // Get list of already uploaded files
-            List<String> uploadedFiles = snowflakeService.getUploadedFiles(targetTableName);
-            logger.info("Found {} already uploaded files", uploadedFiles.size());
+            // Group files by target table
+            Map<String, List<S3Object>> filesByTable = groupFilesByTargetTable(s3Objects);
+            
+            // Process each table group
+            AtomicInteger totalSuccessCount = new AtomicInteger(0);
+            AtomicInteger totalSkipCount = new AtomicInteger(0);
+            AtomicInteger totalErrorCount = new AtomicInteger(0);
 
-            // Copy files
-            AtomicInteger successCount = new AtomicInteger(0);
-            AtomicInteger skipCount = new AtomicInteger(0);
-            AtomicInteger errorCount = new AtomicInteger(0);
+            for (Map.Entry<String, List<S3Object>> entry : filesByTable.entrySet()) {
+                String tableName = entry.getKey();
+                List<S3Object> tableFiles = entry.getValue();
+                
+                logger.info("Processing {} files for table: {}", tableFiles.size(), tableName);
+                
+                // Create target table if it doesn't exist
+                snowflakeService.createFileTable(tableName);
+                
+                // Get list of already uploaded files for this table
+                List<String> uploadedFiles = snowflakeService.getUploadedFiles(tableName);
+                logger.info("Found {} already uploaded files in table {}", uploadedFiles.size(), tableName);
 
-            for (S3Object s3Object : s3Objects) {
-                String s3Key = s3Object.key();
-                String fileName = extractFileName(s3Key);
-                long fileSize = s3Object.size();
-
-                try {
-                    // Skip if file already uploaded
-                    if (uploadedFiles.contains(s3Key)) {
-                        logger.info("Skipping file {} (already uploaded)", fileName);
-                        skipCount.incrementAndGet();
-                        continue;
-                    }
-
-                    // Copy file
-                    copySingleFile(s3Key, fileName, fileSize);
-                    successCount.incrementAndGet();
-                    logger.info("Successfully copied file: {} ({})", fileName, formatFileSize(fileSize));
-
-                } catch (Exception e) {
-                    logger.error("Error copying file: {}", fileName, e);
-                    errorCount.incrementAndGet();
-                }
+                // Process files for this table
+                processFilesForTable(tableName, tableFiles, uploadedFiles, 
+                                   totalSuccessCount, totalSkipCount, totalErrorCount);
             }
 
             // Print summary
             logger.info("Copy operation completed:");
-            logger.info("  - Successfully copied: {}", successCount.get());
-            logger.info("  - Skipped (already uploaded): {}", skipCount.get());
-            logger.info("  - Errors: {}", errorCount.get());
+            logger.info("  - Successfully copied: {}", totalSuccessCount.get());
+            logger.info("  - Skipped (already uploaded): {}", totalSkipCount.get());
+            logger.info("  - Errors: {}", totalErrorCount.get());
 
         } catch (Exception e) {
             logger.error("Fatal error during copy operation", e);
@@ -97,33 +87,86 @@ public class S3ToSnowflakeCopy {
     }
 
     /**
+     * Group files by their target table based on FilePattern rules
+     */
+    private Map<String, List<S3Object>> groupFilesByTargetTable(List<S3Object> s3Objects) {
+        Map<String, List<S3Object>> filesByTable = new HashMap<>();
+        
+        for (S3Object s3Object : s3Objects) {
+            String tableName = s3Service.getTargetTableName(s3Object.key());
+            filesByTable.computeIfAbsent(tableName, k -> new ArrayList<>()).add(s3Object);
+        }
+        
+        return filesByTable;
+    }
+
+    /**
+     * Process files for a specific table
+     */
+    private void processFilesForTable(String tableName, List<S3Object> tableFiles, 
+                                    List<String> uploadedFiles,
+                                    AtomicInteger successCount, AtomicInteger skipCount, AtomicInteger errorCount) {
+        for (S3Object s3Object : tableFiles) {
+            String s3Key = s3Object.key();
+            String fileName = extractFileName(s3Key);
+            long fileSize = s3Object.size();
+
+            try {
+                // Check if file should be processed based on pattern rules
+                if (!s3Service.shouldProcessFile(s3Key, fileSize)) {
+                    logger.info("Skipping file {} (pattern rules)", fileName);
+                    skipCount.incrementAndGet();
+                    continue;
+                }
+
+                // Skip if file already uploaded
+                if (uploadedFiles.contains(s3Key)) {
+                    logger.info("Skipping file {} (already uploaded)", fileName);
+                    skipCount.incrementAndGet();
+                    continue;
+                }
+
+                // Copy file
+                copySingleFile(s3Key, fileName, fileSize, tableName);
+                successCount.incrementAndGet();
+                logger.info("Successfully copied file: {} ({}) to table {}", 
+                           fileName, formatFileSize(fileSize), tableName);
+
+            } catch (Exception e) {
+                logger.error("Error copying file: {}", fileName, e);
+                errorCount.incrementAndGet();
+            }
+        }
+    }
+
+    /**
      * Copy a single file from S3 to Snowflake
      */
-    private void copySingleFile(String s3Key, String fileName, long fileSize) throws IOException, SQLException {
-        logger.info("Copying file: {} ({} bytes)", fileName, fileSize);
+    private void copySingleFile(String s3Key, String fileName, long fileSize, String tableName) throws IOException, SQLException {
+        logger.info("Copying file: {} ({} bytes) to table: {}", fileName, fileSize, tableName);
 
         // For large files (> 100MB), use stream processing
         if (fileSize > 100 * 1024 * 1024) {
-            copyLargeFile(s3Key, fileName, fileSize);
+            copyLargeFile(s3Key, fileName, fileSize, tableName);
         } else {
-            copySmallFile(s3Key, fileName, fileSize);
+            copySmallFile(s3Key, fileName, fileSize, tableName);
         }
     }
 
     /**
      * Copy small files by loading into memory first
      */
-    private void copySmallFile(String s3Key, String fileName, long fileSize) throws IOException, SQLException {
+    private void copySmallFile(String s3Key, String fileName, long fileSize, String tableName) throws IOException, SQLException {
         byte[] fileContent = s3Service.downloadFile(s3Key);
-        snowflakeService.insertFile(targetTableName, fileName, fileSize, fileContent, s3Key);
+        snowflakeService.insertFile(tableName, fileName, fileSize, fileContent, s3Key);
     }
 
     /**
      * Copy large files using stream processing
      */
-    private void copyLargeFile(String s3Key, String fileName, long fileSize) throws IOException, SQLException {
+    private void copyLargeFile(String s3Key, String fileName, long fileSize, String tableName) throws IOException, SQLException {
         try (var inputStream = s3Service.downloadFileAsStream(s3Key)) {
-            snowflakeService.insertFileStream(targetTableName, fileName, fileSize, inputStream, s3Key);
+            snowflakeService.insertFileStream(tableName, fileName, fileSize, inputStream, s3Key);
         }
     }
 
@@ -179,14 +222,10 @@ public class S3ToSnowflakeCopy {
         logger.info("Starting S3 to Snowflake copy application");
 
         try {
-            // Create configurations based on your provided values
-            S3Config s3Config = new S3Config(
+            // Create S3 configuration using the builder
+            S3Config s3Config = S3ConfigBuilder.createDefaultTTSConfig(
                 "", // accessKey - you need to provide this
-                "", // secretKey - you need to provide this
-                "https://swdc-obj-wip4.nam.nsroot.net",
-                "tts-banzai-inystrsvcs-uat",
-                true,
-                "/167764/Investor Services/NAM/US/RAW_167764_TTS_INV_NAM_US_TEST"
+                ""  // secretKey - you need to provide this
             );
 
             SnowflakeConfig snowflakeConfig = new SnowflakeConfig(
@@ -210,4 +249,5 @@ public class S3ToSnowflakeCopy {
 
         logger.info("Application completed");
     }
+
 }

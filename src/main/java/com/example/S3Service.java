@@ -49,19 +49,43 @@ public class S3Service {
     }
 
     /**
-     * List all objects in the S3 bucket
+     * List all objects in the S3 bucket based on file patterns
      * @return List of S3Object
      */
     public List<S3Object> listObjects() {
-        logger.info("Listing objects in bucket: {}", s3Config.getBucket());
+        logger.info("Listing objects in bucket: {}", s3Config.getBucketName());
         
+        List<S3Object> allObjects = new ArrayList<>();
+        
+        // If no file patterns specified, list all objects
+        if (s3Config.getFileMetadata() == null || s3Config.getFileMetadata().isEmpty()) {
+            allObjects = listAllObjects();
+        } else {
+            // Process each file pattern
+            for (FilePattern pattern : s3Config.getFileMetadata()) {
+                if (pattern.isEnabled()) {
+                    logger.info("Processing pattern: {} - {}", pattern.getPattern(), pattern.getDescription());
+                    List<S3Object> patternObjects = listObjectsByPattern(pattern);
+                    allObjects.addAll(patternObjects);
+                }
+            }
+        }
+        
+        logger.info("Found {} total objects in bucket", allObjects.size());
+        return allObjects;
+    }
+
+    /**
+     * List all objects in the bucket (no pattern filtering)
+     * @return List of S3Object
+     */
+    private List<S3Object> listAllObjects() {
         List<S3Object> objects = new ArrayList<>();
         String continuationToken = null;
         
         do {
             ListObjectsV2Request.Builder requestBuilder = ListObjectsV2Request.builder()
-                    .bucket(s3Config.getBucket())
-                    .prefix(s3Config.getBucketPath());
+                    .bucket(s3Config.getBucketName());
             
             if (continuationToken != null) {
                 requestBuilder.continuationToken(continuationToken);
@@ -73,8 +97,62 @@ public class S3Service {
             
         } while (continuationToken != null);
         
-        logger.info("Found {} objects in bucket", objects.size());
         return objects;
+    }
+
+    /**
+     * List objects matching a specific file pattern
+     * @param pattern The file pattern to match
+     * @return List of S3Object matching the pattern
+     */
+    private List<S3Object> listObjectsByPattern(FilePattern pattern) {
+        List<S3Object> objects = new ArrayList<>();
+        String continuationToken = null;
+        
+        do {
+            ListObjectsV2Request.Builder requestBuilder = ListObjectsV2Request.builder()
+                    .bucket(s3Config.getBucketName())
+                    .prefix(pattern.getPattern());
+            
+            if (continuationToken != null) {
+                requestBuilder.continuationToken(continuationToken);
+            }
+            
+            ListObjectsV2Response response = s3Client.listObjectsV2(requestBuilder.build());
+            
+            // Filter objects by pattern if it contains wildcards
+            for (S3Object object : response.contents()) {
+                if (matchesPattern(object.key(), pattern.getPattern())) {
+                    objects.add(object);
+                }
+            }
+            
+            continuationToken = response.nextContinuationToken();
+            
+        } while (continuationToken != null);
+        
+        logger.info("Found {} objects matching pattern: {}", objects.size(), pattern.getPattern());
+        return objects;
+    }
+
+    /**
+     * Check if a file key matches the given pattern
+     * @param key The S3 object key
+     * @param pattern The pattern to match (supports * wildcards)
+     * @return true if matches, false otherwise
+     */
+    private boolean matchesPattern(String key, String pattern) {
+        if (pattern == null || pattern.isEmpty()) {
+            return true;
+        }
+        
+        // Convert pattern to regex
+        String regexPattern = pattern
+                .replace(".", "\\.")
+                .replace("*", ".*")
+                .replace("?", ".");
+        
+        return key.matches(regexPattern);
     }
 
     /**
@@ -156,6 +234,60 @@ public class S3Service {
             logger.error("Error getting file size for key: {}", key, e);
             return -1;
         }
+    }
+
+    /**
+     * Get the FilePattern that matches the given S3 object key
+     * @param s3Key The S3 object key
+     * @return Matching FilePattern or null if no match
+     */
+    public FilePattern getMatchingPattern(String s3Key) {
+        if (s3Config.getFileMetadata() == null || s3Config.getFileMetadata().isEmpty()) {
+            return null;
+        }
+        
+        for (FilePattern pattern : s3Config.getFileMetadata()) {
+            if (pattern.isEnabled() && matchesPattern(s3Key, pattern.getPattern())) {
+                return pattern;
+            }
+        }
+        
+        return null;
+    }
+
+    /**
+     * Get the target table name for a given S3 object
+     * @param s3Key The S3 object key
+     * @return Target table name or default if no pattern match
+     */
+    public String getTargetTableName(String s3Key) {
+        FilePattern pattern = getMatchingPattern(s3Key);
+        if (pattern != null && pattern.getTargetTable() != null && !pattern.getTargetTable().isEmpty()) {
+            return pattern.getTargetTable();
+        }
+        return "S3_FILES"; // Default table name
+    }
+
+    /**
+     * Check if file should be processed based on pattern rules
+     * @param s3Key The S3 object key
+     * @param fileSize The file size
+     * @return true if file should be processed
+     */
+    public boolean shouldProcessFile(String s3Key, long fileSize) {
+        FilePattern pattern = getMatchingPattern(s3Key);
+        if (pattern == null) {
+            return true; // Process if no pattern restrictions
+        }
+        
+        // Check file size limit if specified
+        if (pattern.getMaxFileSize() > 0 && fileSize > pattern.getMaxFileSize()) {
+            logger.warn("File {} exceeds size limit for pattern {}: {} > {}", 
+                       s3Key, pattern.getPattern(), fileSize, pattern.getMaxFileSize());
+            return false;
+        }
+        
+        return true;
     }
 
     /**

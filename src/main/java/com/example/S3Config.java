@@ -1,29 +1,47 @@
 package com.example;
 
+import java.util.List;
+
 /**
  * Configuration class for IBM S3 Sonic bucket
+ * Updated to match existing S3 configuration structure
  */
 public class S3Config {
+    private String bucketName;
     private String accessKey;
     private String secretKey;
+    private List<FilePattern> fileMetadata;
     private String endpoint;
-    private String bucket;
     private boolean notificationEnable;
-    private String bucketPath;
 
     public S3Config() {}
 
-    public S3Config(String accessKey, String secretKey, String endpoint, String bucket, 
-                   boolean notificationEnable, String bucketPath) {
+    public S3Config(String bucketName, String accessKey, String secretKey, List<FilePattern> fileMetadata) {
+        this.bucketName = bucketName;
         this.accessKey = accessKey;
         this.secretKey = secretKey;
+        this.fileMetadata = fileMetadata;
+    }
+
+    public S3Config(String bucketName, String accessKey, String secretKey, List<FilePattern> fileMetadata,
+                   String endpoint, boolean notificationEnable) {
+        this.bucketName = bucketName;
+        this.accessKey = accessKey;
+        this.secretKey = secretKey;
+        this.fileMetadata = fileMetadata;
         this.endpoint = endpoint;
-        this.bucket = bucket;
         this.notificationEnable = notificationEnable;
-        this.bucketPath = bucketPath;
     }
 
     // Getters and Setters
+    public String getBucketName() {
+        return bucketName;
+    }
+
+    public void setBucketName(String bucketName) {
+        this.bucketName = bucketName;
+    }
+
     public String getAccessKey() {
         return accessKey;
     }
@@ -40,20 +58,20 @@ public class S3Config {
         this.secretKey = secretKey;
     }
 
+    public List<FilePattern> getFileMetadata() {
+        return fileMetadata;
+    }
+
+    public void setFileMetadata(List<FilePattern> fileMetadata) {
+        this.fileMetadata = fileMetadata;
+    }
+
     public String getEndpoint() {
         return endpoint;
     }
 
     public void setEndpoint(String endpoint) {
         this.endpoint = endpoint;
-    }
-
-    public String getBucket() {
-        return bucket;
-    }
-
-    public void setBucket(String bucket) {
-        this.bucket = bucket;
     }
 
     public boolean isNotificationEnable() {
@@ -64,23 +82,24 @@ public class S3Config {
         this.notificationEnable = notificationEnable;
     }
 
-    public String getBucketPath() {
-        return bucketPath;
+    // Convenience methods for backward compatibility
+    public String getBucket() {
+        return bucketName;
     }
 
-    public void setBucketPath(String bucketPath) {
-        this.bucketPath = bucketPath;
+    public void setBucket(String bucket) {
+        this.bucketName = bucket;
     }
 
     @Override
     public String toString() {
         return "S3Config{" +
-                "accessKey='" + accessKey + '\'' +
+                "bucketName='" + bucketName + '\'' +
+                ", accessKey='" + accessKey + '\'' +
                 ", secretKey='[HIDDEN]'" +
+                ", fileMetadata=" + (fileMetadata != null ? fileMetadata.size() + " patterns" : "null") +
                 ", endpoint='" + endpoint + '\'' +
-                ", bucket='" + bucket + '\'' +
                 ", notificationEnable=" + notificationEnable +
-                ", bucketPath='" + bucketPath + '\'' +
                 '}';
     }
 }
