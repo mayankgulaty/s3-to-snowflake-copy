@@ -1,0 +1,32 @@
+# Example Configuration File
+# Copy this file to src/main/resources/application.conf and update with your credentials
+
+# S3 Configuration
+s3 {
+  accessKey = "YOUR_S3_ACCESS_KEY_HERE"
+  secretKey = "YOUR_S3_SECRET_KEY_HERE"
+  endpoint = "https://swdc-obj-wip4.nam.nsroot.net"
+  bucket = "tts-banzai-inystrsvcs-uat"
+  notificationEnable = true
+  bucketPath = "/167764/Investor Services/NAM/US/RAW_167764_TTS_INV_NAM_US_TEST"
+}
+
+# Snowflake Configuration
+snowflake {
+  url = "jdbc:snowflake://a_icg_dev.gfts.us-east-2.aws.privatelink.snowflakecomputing.com"
+  user = "F_ICG_DEV_177688_ALERTS"
+  password = "YOUR_SNOWFLAKE_PASSWORD_HERE"
+  database = "D_ICG_DEV_177688_MASTER"
+  schema = "LANDING"
+  role = "R_ICG_DEV_177688_APPADMIN"
+  warehouse = "W_ICG_DEV_177688_DEFAULT_XS"
+}
+
+# Application Configuration
+app {
+  targetTableName = "S3_FILES"
+  largeFileThresholdMB = 100
+  batchSize = 100
+  maxRetries = 3
+  retryDelayMs = 5000
+}
