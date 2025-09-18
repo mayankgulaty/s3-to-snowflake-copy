@@ -5,9 +5,7 @@
 s3 {
   accessKey = "YOUR_S3_ACCESS_KEY_HERE"
   secretKey = "YOUR_S3_SECRET_KEY_HERE"
-  endpoint = "https://swdc-obj-wip4.nam.nsroot.net"
   bucket = "tts-banzai-inystrsvcs-uat"
-  notificationEnable = true
   bucketPath = "/167764/Investor Services/NAM/US/RAW_167764_TTS_INV_NAM_US_TEST"
 }
 

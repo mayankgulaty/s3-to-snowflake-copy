@@ -28,9 +28,7 @@ Edit `src/main/resources/application.conf` and provide your credentials:
 s3 {
   accessKey = "your-s3-access-key"
   secretKey = "your-s3-secret-key"
-  endpoint = "https://swdc-obj-wip4.nam.nsroot.net"
   bucket = "tts-banzai-inystrsvcs-uat"
-  notificationEnable = true
   bucketPath = "/167764/Investor Services/NAM/US/RAW_167764_TTS_INV_NAM_US_TEST"
 }
 

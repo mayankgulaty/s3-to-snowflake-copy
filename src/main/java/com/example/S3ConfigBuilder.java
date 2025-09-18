@@ -10,8 +10,6 @@ public class S3ConfigBuilder {
     private String bucketName;
     private String accessKey;
     private String secretKey;
-    private String endpoint;
-    private boolean notificationEnable;
     private List<FilePattern> filePatterns;
 
     public S3ConfigBuilder() {
@@ -33,15 +31,6 @@ public class S3ConfigBuilder {
         return this;
     }
 
-    public S3ConfigBuilder endpoint(String endpoint) {
-        this.endpoint = endpoint;
-        return this;
-    }
-
-    public S3ConfigBuilder notificationEnable(boolean notificationEnable) {
-        this.notificationEnable = notificationEnable;
-        return this;
-    }
 
     public S3ConfigBuilder addFilePattern(String pattern, String description, boolean enabled) {
         this.filePatterns.add(new FilePattern(pattern, description, enabled));
@@ -108,7 +97,7 @@ public class S3ConfigBuilder {
     }
 
     public S3Config build() {
-        return new S3Config(bucketName, accessKey, secretKey, filePatterns, endpoint, notificationEnable);
+        return new S3Config(bucketName, accessKey, secretKey, filePatterns);
     }
 
     /**
@@ -119,8 +108,6 @@ public class S3ConfigBuilder {
                 .bucketName("tts-banzai-inystrsvcs-uat")
                 .accessKey(accessKey)
                 .secretKey(secretKey)
-                .endpoint("https://swdc-obj-wip4.nam.nsroot.net")
-                .notificationEnable(true)
                 .addCsvPattern("/167764/Investor Services/NAM/US/RAW_167764_TTS_INV_NAM_US_TEST", "TTS_CSV_FILES")
                 .addJsonPattern("/167764/Investor Services/NAM/US/RAW_167764_TTS_INV_NAM_US_TEST", "TTS_JSON_FILES")
                 .addTextPattern("/167764/Investor Services/NAM/US/RAW_167764_TTS_INV_NAM_US_TEST", "TTS_TEXT_FILES")

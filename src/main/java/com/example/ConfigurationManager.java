@@ -27,12 +27,10 @@ public class ConfigurationManager {
         logger.info("Loading S3 configuration");
         
         return new S3Config(
+            config.getString("s3.bucket"),
             config.getString("s3.accessKey"),
             config.getString("s3.secretKey"),
-            config.getString("s3.endpoint"),
-            config.getString("s3.bucket"),
-            config.getBoolean("s3.notificationEnable"),
-            config.getString("s3.bucketPath")
+            null // fileMetadata will be set separately if needed
         );
     }
 

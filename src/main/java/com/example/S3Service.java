@@ -33,18 +33,17 @@ public class S3Service {
     }
 
     private S3Client createS3Client() {
-        // Create credentials for IBM S3 Sonic
+        // Create credentials for S3
         AwsBasicCredentials credentials = AwsBasicCredentials.create(
             s3Config.getAccessKey(),
             s3Config.getSecretKey()
         );
 
-        // Create S3 client with custom endpoint for IBM S3 Sonic
+        // Create S3 client
         return S3Client.builder()
                 .region(Region.US_EAST_1) // Default region, can be adjusted
-                .endpointOverride(java.net.URI.create(s3Config.getEndpoint()))
                 .credentialsProvider(StaticCredentialsProvider.create(credentials))
-                .forcePathStyle(true) // Required for IBM S3 Sonic
+                .forcePathStyle(true) // Required for some S3-compatible services
                 .build();
     }
 

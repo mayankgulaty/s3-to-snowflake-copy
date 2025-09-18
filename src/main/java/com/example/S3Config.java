@@ -11,8 +11,6 @@ public class S3Config {
     private String accessKey;
     private String secretKey;
     private List<FilePattern> fileMetadata;
-    private String endpoint;
-    private boolean notificationEnable;
 
     public S3Config() {}
 
@@ -23,15 +21,6 @@ public class S3Config {
         this.fileMetadata = fileMetadata;
     }
 
-    public S3Config(String bucketName, String accessKey, String secretKey, List<FilePattern> fileMetadata,
-                   String endpoint, boolean notificationEnable) {
-        this.bucketName = bucketName;
-        this.accessKey = accessKey;
-        this.secretKey = secretKey;
-        this.fileMetadata = fileMetadata;
-        this.endpoint = endpoint;
-        this.notificationEnable = notificationEnable;
-    }
 
     // Getters and Setters
     public String getBucketName() {
@@ -66,21 +55,6 @@ public class S3Config {
         this.fileMetadata = fileMetadata;
     }
 
-    public String getEndpoint() {
-        return endpoint;
-    }
-
-    public void setEndpoint(String endpoint) {
-        this.endpoint = endpoint;
-    }
-
-    public boolean isNotificationEnable() {
-        return notificationEnable;
-    }
-
-    public void setNotificationEnable(boolean notificationEnable) {
-        this.notificationEnable = notificationEnable;
-    }
 
     // Convenience methods for backward compatibility
     public String getBucket() {
@@ -98,8 +72,6 @@ public class S3Config {
                 ", accessKey='" + accessKey + '\'' +
                 ", secretKey='[HIDDEN]'" +
                 ", fileMetadata=" + (fileMetadata != null ? fileMetadata.size() + " patterns" : "null") +
-                ", endpoint='" + endpoint + '\'' +
-                ", notificationEnable=" + notificationEnable +
                 '}';
     }
 }

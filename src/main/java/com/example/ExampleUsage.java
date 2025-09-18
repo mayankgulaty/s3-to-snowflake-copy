@@ -31,8 +31,6 @@ public class ExampleUsage {
                 .bucketName("tts-banzai-inystrsvcs-uat")
                 .accessKey("your-access-key")
                 .secretKey("your-secret-key")
-                .endpoint("https://swdc-obj-wip4.nam.nsroot.net")
-                .notificationEnable(true)
                 .addCsvPattern("/167764/Investor Services/NAM/US/RAW_167764_TTS_INV_NAM_US_TEST", "TTS_CSV_FILES")
                 .addJsonPattern("/167764/Investor Services/NAM/US/RAW_167764_TTS_INV_NAM_US_TEST", "TTS_JSON_FILES")
                 .addTextPattern("/167764/Investor Services/NAM/US/RAW_167764_TTS_INV_NAM_US_TEST", "TTS_TEXT_FILES")
@@ -78,9 +76,7 @@ public class ExampleUsage {
             "tts-banzai-inystrsvcs-uat",  // bucketName
             "your-access-key",            // accessKey
             "your-secret-key",            // secretKey
-            fileMetadata,                 // fileMetadata (List<FilePattern>)
-            "https://swdc-obj-wip4.nam.nsroot.net",  // endpoint
-            true                          // notificationEnable
+            fileMetadata                  // fileMetadata (List<FilePattern>)
         );
         
         System.out.println("S3 Config created: " + s3Config);
@@ -96,8 +92,6 @@ public class ExampleUsage {
                 .bucketName("tts-banzai-inystrsvcs-uat")
                 .accessKey("your-access-key")
                 .secretKey("your-secret-key")
-                .endpoint("https://swdc-obj-wip4.nam.nsroot.net")
-                .notificationEnable(true)
                 // Custom patterns for different file types
                 .addFilePattern(
                     "/167764/Investor Services/NAM/US/RAW_167764_TTS_INV_NAM_US_TEST/data/*.parquet",
