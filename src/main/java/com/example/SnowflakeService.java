@@ -29,18 +29,35 @@ public class SnowflakeService {
     public void connect() throws SQLException {
         logger.info("Connecting to Snowflake...");
         
-        String jdbcUrl = String.format("jdbc:snowflake://%s?db=%s&schema=%s&warehouse=%s&role=%s",
-                snowflakeConfig.getUrl().replace("jdbc:snowflake://", ""),
-                snowflakeConfig.getDatabase(),
-                snowflakeConfig.getSchema(),
-                snowflakeConfig.getWarehouse(),
-                snowflakeConfig.getRole());
+        // Use the URL directly from config - it should already be properly formatted
+        String jdbcUrl = snowflakeConfig.getUrl();
+        
+        // Add query parameters if they're not already in the URL
+        if (!jdbcUrl.contains("?")) {
+            jdbcUrl = String.format("%s?db=%s&schema=%s&warehouse=%s&role=%s",
+                    jdbcUrl,
+                    snowflakeConfig.getDatabase(),
+                    snowflakeConfig.getSchema(),
+                    snowflakeConfig.getWarehouse(),
+                    snowflakeConfig.getRole());
+        }
+        
+        logger.info("Using JDBC URL: {}", jdbcUrl);
+        logger.info("User: {}", snowflakeConfig.getUser());
+        logger.info("Database: {}", snowflakeConfig.getDatabase());
+        logger.info("Schema: {}", snowflakeConfig.getSchema());
+        logger.info("Warehouse: {}", snowflakeConfig.getWarehouse());
+        logger.info("Role: {}", snowflakeConfig.getRole());
 
-        this.connection = DriverManager.getConnection(
-                jdbcUrl,
-                snowflakeConfig.getUser(),
-                snowflakeConfig.getPassword()
-        );
+        // Set connection properties with timeouts
+        java.util.Properties props = new java.util.Properties();
+        props.setProperty("user", snowflakeConfig.getUser());
+        props.setProperty("password", snowflakeConfig.getPassword());
+        props.setProperty("loginTimeout", "30");
+        props.setProperty("networkTimeout", "30000");
+        props.setProperty("queryTimeout", "300");
+        
+        this.connection = DriverManager.getConnection(jdbcUrl, props);
         
         logger.info("Successfully connected to Snowflake");
     }
