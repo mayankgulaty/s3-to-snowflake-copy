@@ -25,9 +25,9 @@ if command -v mvn &> /dev/null; then
 fi
 
 # Set classpath
-CLASSPATH="target/classes"
-if [ -d "target/lib" ]; then
-    CLASSPATH="$CLASSPATH:target/lib/*"
+CLASSPATH="src/main/java"
+if [ -d "lib" ]; then
+    CLASSPATH="$CLASSPATH:lib/*"
 fi
 
 echo "🚀 Running Java debug program..."

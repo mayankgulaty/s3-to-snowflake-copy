@@ -192,7 +192,7 @@ public class SnowflakeService {
     }
 
     /**
-     * Upload file to Snowflake Internal Stage
+     * Upload file to Snowflake Internal Stage (for local files only)
      * @param stagePath The internal stage path (e.g., @my_stage/folder/)
      * @param fileName The name of the file
      * @param fileContent The binary content of the file
@@ -273,6 +273,61 @@ public class SnowflakeService {
         try (Statement statement = connection.createStatement()) {
             statement.execute(putCommand);
             logger.info("✅ Successfully uploaded file {} to stage {}", filePath, stagePath);
+        }
+    }
+
+    /**
+     * Copy file from S3 to Snowflake Internal Stage using COPY command
+     * @param stagePath The internal stage path (e.g., @my_stage/folder/)
+     * @param s3Bucket The S3 bucket name
+     * @param s3Key The S3 object key
+     * @param awsAccessKey The AWS access key
+     * @param awsSecretKey The AWS secret key
+     * @param awsRegion The AWS region
+     * @throws SQLException if copy fails
+     */
+    public void copyFromS3ToStage(String stagePath, String s3Bucket, String s3Key, 
+                                 String awsAccessKey, String awsSecretKey, String awsRegion) throws SQLException {
+        logger.info("Copying file from S3 to Snowflake Internal Stage: s3://{}/{} -> {}", 
+                   s3Bucket, s3Key, stagePath);
+        
+        // Ensure connection is established
+        if (connection == null || connection.isClosed()) {
+            connect();
+        }
+        
+        // Create the stage if it doesn't exist
+        createStageIfNotExists(stagePath);
+        
+        // Create S3 external stage for the copy operation
+        String stageName = stagePath.split("/")[0];
+        String externalStageName = stageName + "_s3_external";
+        
+        // Create external stage pointing to S3
+        String createExternalStageSQL = String.format("""
+            CREATE OR REPLACE STAGE %s
+            URL = 's3://%s/'
+            CREDENTIALS = (AWS_KEY_ID = '%s' AWS_SECRET_KEY = '%s')
+            REGION = '%s'
+            """, externalStageName, s3Bucket, awsAccessKey, awsSecretKey, awsRegion);
+        
+        logger.info("Creating external stage: {}", createExternalStageSQL);
+        
+        try (Statement statement = connection.createStatement()) {
+            statement.execute(createExternalStageSQL);
+            logger.info("✅ External stage created successfully");
+            
+            // Copy file from S3 external stage to internal stage
+            String copyCommand = String.format("COPY INTO %s FROM @%s/%s", 
+                    stagePath, externalStageName, s3Key);
+            
+            logger.info("Executing COPY command: {}", copyCommand);
+            statement.execute(copyCommand);
+            logger.info("✅ Successfully copied file from S3 to stage {}", stagePath);
+            
+        } catch (SQLException e) {
+            logger.error("Failed to copy file from S3 to Snowflake stage", e);
+            throw e;
         }
     }
 

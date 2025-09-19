@@ -63,7 +63,7 @@ public class JavaDebug {
     public static void testBasicConnection() {
         System.out.println("\n--- Step 2: Basic Connection Test ---");
         
-        String url = "jdbc:snowflake://a_icg_dev.gfts.us-east-2.aws.privatelink.snowflakecomputing.com?db=D_ICG_DEV_177688_MASTER&schema=LANDING&warehouse=W_ICG_DEV_177688_DEFAULT_XS&role=R_ICG_DEV_177688_APPADMIN";
+        String url = "jdbc:snowflake://a_icg_dev.us-east-2.aws.snowflakecomputing.com?db=D_ICG_DEV_177688_MASTER&schema=LANDING&warehouse=W_ICG_DEV_177688_DEFAULT_XS&role=R_ICG_DEV_177688_APPADMIN";
         String user = "F_ICG_DEV_177688_ALERTS";
         String password = "YOUR_PASSWORD_HERE"; // UPDATE THIS
         
@@ -105,7 +105,7 @@ public class JavaDebug {
     public static void testWithTimeouts() {
         System.out.println("\n--- Step 3: Connection with Timeouts ---");
         
-        String url = "jdbc:snowflake://a_icg_dev.gfts.us-east-2.aws.privatelink.snowflakecomputing.com?db=D_ICG_DEV_177688_MASTER&schema=LANDING&warehouse=W_ICG_DEV_177688_DEFAULT_XS&role=R_ICG_DEV_177688_APPADMIN&loginTimeout=5&networkTimeout=10000";
+        String url = "jdbc:snowflake://a_icg_dev.us-east-2.aws.snowflakecomputing.com?db=D_ICG_DEV_177688_MASTER&schema=LANDING&warehouse=W_ICG_DEV_177688_DEFAULT_XS&role=R_ICG_DEV_177688_APPADMIN&loginTimeout=5&networkTimeout=10000";
         String user = "F_ICG_DEV_177688_ALERTS";
         String password = "YOUR_PASSWORD_HERE"; // UPDATE THIS
         
@@ -150,9 +150,9 @@ public class JavaDebug {
         
         // Test different URL formats
         String[] urls = {
-            "jdbc:snowflake://a_icg_dev.gfts.us-east-2.aws.privatelink.snowflakecomputing.com",
-            "jdbc:snowflake://a_icg_dev.gfts.us-east-2.aws.privatelink.snowflakecomputing.com:443",
-            "jdbc:snowflake://a_icg_dev.gfts.us-east-2.aws.privatelink.snowflakecomputing.com?account=a_icg_dev"
+            "jdbc:snowflake://a_icg_dev.us-east-2.aws.snowflakecomputing.com",
+            "jdbc:snowflake://a_icg_dev.snowflakecomputing.com",
+            "jdbc:snowflake://a_icg_dev.us-east-2.aws.snowflakecomputing.com?account=a_icg_dev"
         };
         
         for (int i = 0; i < urls.length; i++) {
