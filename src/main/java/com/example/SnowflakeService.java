@@ -209,19 +209,70 @@ public class SnowflakeService {
         // Create the stage if it doesn't exist
         createStageIfNotExists(stagePath);
         
-        // Upload file to stage using PUT command
-        String putCommand = String.format("PUT 'file://%s' %s", fileName, stagePath);
+        // For in-memory file content, we need to use a different approach
+        // Since Snowflake PUT command requires a file path, we'll:
+        // 1. Create a temporary file
+        // 2. Use PUT command to upload it
+        // 3. Clean up the temporary file
         
-        try (Statement statement = connection.createStatement()) {
-            // For now, we'll use a simple approach - in a real implementation,
-            // you might want to use Snowflake's PUT command or REST API
+        java.io.File tempFile = null;
+        try {
+            // Create temporary file
+            tempFile = java.io.File.createTempFile("snowflake_upload_", "_" + fileName);
+            java.nio.file.Files.write(tempFile.toPath(), fileContent);
+            
+            // Use Snowflake PUT command
+            String putCommand = String.format("PUT 'file://%s' %s AUTO_COMPRESS=FALSE OVERWRITE=TRUE", 
+                    tempFile.getAbsolutePath(), stagePath);
+            
             logger.info("Executing PUT command: {}", putCommand);
             
-            // Note: This is a simplified implementation
-            // In practice, you would need to implement the actual file upload
-            // using Snowflake's PUT command or REST API
-            logger.warn("PUT command not fully implemented - this is a placeholder");
-            logger.info("File {} would be uploaded to stage {}", fileName, stagePath);
+            try (Statement statement = connection.createStatement()) {
+                statement.execute(putCommand);
+                logger.info("✅ Successfully uploaded file {} to stage {}", fileName, stagePath);
+            }
+            
+        } catch (java.io.IOException e) {
+            logger.error("Failed to create temporary file for upload", e);
+            throw new SQLException("Failed to create temporary file for upload", e);
+        } finally {
+            // Clean up temporary file
+            if (tempFile != null && tempFile.exists()) {
+                if (tempFile.delete()) {
+                    logger.debug("Cleaned up temporary file: {}", tempFile.getAbsolutePath());
+                } else {
+                    logger.warn("Failed to delete temporary file: {}", tempFile.getAbsolutePath());
+                }
+            }
+        }
+    }
+
+    /**
+     * Upload file directly to Snowflake Internal Stage using file path
+     * @param stagePath The internal stage path (e.g., @my_stage/folder/)
+     * @param filePath The local file path to upload
+     * @throws SQLException if upload fails
+     */
+    public void uploadFileToStage(String stagePath, String filePath) throws SQLException {
+        logger.info("Uploading file {} to Snowflake Internal Stage: {}", filePath, stagePath);
+        
+        // Ensure connection is established
+        if (connection == null || connection.isClosed()) {
+            connect();
+        }
+        
+        // Create the stage if it doesn't exist
+        createStageIfNotExists(stagePath);
+        
+        // Use Snowflake PUT command with file path
+        String putCommand = String.format("PUT 'file://%s' %s AUTO_COMPRESS=FALSE OVERWRITE=TRUE", 
+                filePath, stagePath);
+        
+        logger.info("Executing PUT command: {}", putCommand);
+        
+        try (Statement statement = connection.createStatement()) {
+            statement.execute(putCommand);
+            logger.info("✅ Successfully uploaded file {} to stage {}", filePath, stagePath);
         }
     }
 
