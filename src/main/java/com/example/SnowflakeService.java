@@ -339,7 +339,7 @@ public class SnowflakeService {
     }
     
     /**
-     * Download file from S3 to local file
+     * Download file from S3 to local file using AWS SDK
      * @param bucketName S3 bucket name
      * @param s3Key S3 object key
      * @param localFile Local file to save to
@@ -352,19 +352,39 @@ public class SnowflakeService {
                                    String accessKey, String secretKey, String region) throws Exception {
         logger.info("Downloading file from S3: s3://{}/{}", bucketName, s3Key);
         
-        // Note: This is a simplified implementation
-        // In a real implementation, you would use AWS SDK to download the file
-        // For now, we'll create a placeholder that shows the concept
-        
-        logger.warn("S3 download not implemented - this is a placeholder");
-        logger.info("In real implementation, you would:");
-        logger.info("1. Create S3 client with credentials");
-        logger.info("2. Download object from S3 bucket '{}' with key '{}'", bucketName, s3Key);
-        logger.info("3. Save to local file: {}", localFile.getAbsolutePath());
-        
-        // For demonstration, create a dummy file
-        java.nio.file.Files.write(localFile.toPath(), 
-            ("This is a placeholder file downloaded from S3://" + bucketName + "/" + s3Key).getBytes());
+        try {
+            // Create AWS credentials
+            com.amazonaws.auth.AWSCredentials credentials = new com.amazonaws.auth.BasicAWSCredentials(accessKey, secretKey);
+            
+            // Create S3 client
+            com.amazonaws.services.s3.AmazonS3 s3Client = com.amazonaws.services.s3.AmazonS3ClientBuilder.standard()
+                    .withCredentials(new com.amazonaws.auth.AWSStaticCredentialsProvider(credentials))
+                    .withRegion(region)
+                    .build();
+            
+            // Download object from S3
+            com.amazonaws.services.s3.model.GetObjectRequest getObjectRequest = 
+                new com.amazonaws.services.s3.model.GetObjectRequest(bucketName, s3Key);
+            
+            try (com.amazonaws.services.s3.model.S3Object s3Object = s3Client.getObject(getObjectRequest);
+                 java.io.InputStream inputStream = s3Object.getObjectContent();
+                 java.io.FileOutputStream outputStream = new java.io.FileOutputStream(localFile)) {
+                
+                // Copy data from S3 input stream to local file
+                byte[] buffer = new byte[8192];
+                int bytesRead;
+                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, bytesRead);
+                }
+                
+                logger.info("✅ Successfully downloaded file from S3: s3://{}/{} -> {}", 
+                           bucketName, s3Key, localFile.getAbsolutePath());
+            }
+            
+        } catch (Exception e) {
+            logger.error("Failed to download file from S3: s3://{}/{}", bucketName, s3Key, e);
+            throw new Exception("Failed to download file from S3: " + e.getMessage(), e);
+        }
     }
 
     /**
