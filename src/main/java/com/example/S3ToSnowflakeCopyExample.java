@@ -32,9 +32,9 @@ public class S3ToSnowflakeCopyExample {
         try {
             SnowflakeService snowflakeService = new SnowflakeService(snowflakeConfig);
             
-            // Method 1: Copy directly from S3 to Snowflake (RECOMMENDED)
-            System.out.println("Copying from S3 to Snowflake...");
-            snowflakeService.copyFromS3ToStage(
+            // Method 1: Copy FILE from S3 to Snowflake (as a file, not table data)
+            System.out.println("Copying FILE from S3 to Snowflake...");
+            snowflakeService.copyFileFromS3ToStage(
                 stagePath, 
                 s3Bucket, 
                 s3Key, 
