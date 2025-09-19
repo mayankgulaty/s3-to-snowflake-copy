@@ -277,19 +277,14 @@ public class SnowflakeService {
     }
 
     /**
-     * Copy file from S3 to Snowflake Internal Stage (as a file, not table data)
+     * Copy file from S3 to Snowflake Internal Stage using existing CompatibleS3Service
      * @param stagePath The internal stage path (e.g., @my_stage/folder/)
-     * @param s3Bucket The S3 bucket name
+     * @param s3Service The CompatibleS3Service instance
      * @param s3Key The S3 object key
-     * @param awsAccessKey The AWS access key
-     * @param awsSecretKey The AWS secret key
-     * @param awsRegion The AWS region
      * @throws SQLException if copy fails
      */
-    public void copyFileFromS3ToStage(String stagePath, String s3Bucket, String s3Key, 
-                                     String awsAccessKey, String awsSecretKey, String awsRegion) throws SQLException {
-        logger.info("Copying FILE from S3 to Snowflake Internal Stage: s3://{}/{} -> {}", 
-                   s3Bucket, s3Key, stagePath);
+    public void copyFileFromS3ToStage(String stagePath, CompatibleS3Service s3Service, String s3Key) throws SQLException {
+        logger.info("Copying FILE from S3 to Snowflake Internal Stage: {} -> {}", s3Key, stagePath);
         
         // Ensure connection is established
         if (connection == null || connection.isClosed()) {
@@ -300,17 +295,18 @@ public class SnowflakeService {
         createStageIfNotExists(stagePath);
         
         // For copying files (not table data), we need to:
-        // 1. Download the file from S3 to local temp file
+        // 1. Download the file from S3 using existing service
         // 2. Use PUT command to upload to Snowflake stage
         
         java.io.File tempFile = null;
         try {
+            // Download file from S3 using existing service
+            byte[] fileContent = s3Service.downloadFile(s3Key);
+            
             // Create temporary file
             String fileName = s3Key.substring(s3Key.lastIndexOf("/") + 1);
             tempFile = java.io.File.createTempFile("s3_download_", "_" + fileName);
-            
-            // Download file from S3 to temp file
-            downloadFileFromS3(s3Bucket, s3Key, tempFile, awsAccessKey, awsSecretKey, awsRegion);
+            java.nio.file.Files.write(tempFile.toPath(), fileContent);
             
             // Use PUT command to upload file to Snowflake stage
             String putCommand = String.format("PUT 'file://%s' %s AUTO_COMPRESS=FALSE OVERWRITE=TRUE", 
@@ -338,54 +334,6 @@ public class SnowflakeService {
         }
     }
     
-    /**
-     * Download file from S3 to local file using AWS SDK
-     * @param bucketName S3 bucket name
-     * @param s3Key S3 object key
-     * @param localFile Local file to save to
-     * @param accessKey AWS access key
-     * @param secretKey AWS secret key
-     * @param region AWS region
-     * @throws Exception if download fails
-     */
-    private void downloadFileFromS3(String bucketName, String s3Key, java.io.File localFile, 
-                                   String accessKey, String secretKey, String region) throws Exception {
-        logger.info("Downloading file from S3: s3://{}/{}", bucketName, s3Key);
-        
-        try {
-            // Create AWS credentials
-            com.amazonaws.auth.AWSCredentials credentials = new com.amazonaws.auth.BasicAWSCredentials(accessKey, secretKey);
-            
-            // Create S3 client
-            com.amazonaws.services.s3.AmazonS3 s3Client = com.amazonaws.services.s3.AmazonS3ClientBuilder.standard()
-                    .withCredentials(new com.amazonaws.auth.AWSStaticCredentialsProvider(credentials))
-                    .withRegion(region)
-                    .build();
-            
-            // Download object from S3
-            com.amazonaws.services.s3.model.GetObjectRequest getObjectRequest = 
-                new com.amazonaws.services.s3.model.GetObjectRequest(bucketName, s3Key);
-            
-            try (com.amazonaws.services.s3.model.S3Object s3Object = s3Client.getObject(getObjectRequest);
-                 java.io.InputStream inputStream = s3Object.getObjectContent();
-                 java.io.FileOutputStream outputStream = new java.io.FileOutputStream(localFile)) {
-                
-                // Copy data from S3 input stream to local file
-                byte[] buffer = new byte[8192];
-                int bytesRead;
-                while ((bytesRead = inputStream.read(buffer)) != -1) {
-                    outputStream.write(buffer, 0, bytesRead);
-                }
-                
-                logger.info("✅ Successfully downloaded file from S3: s3://{}/{} -> {}", 
-                           bucketName, s3Key, localFile.getAbsolutePath());
-            }
-            
-        } catch (Exception e) {
-            logger.error("Failed to download file from S3: s3://{}/{}", bucketName, s3Key, e);
-            throw new Exception("Failed to download file from S3: " + e.getMessage(), e);
-        }
-    }
 
     /**
      * Create Snowflake Internal Stage if it doesn't exist
