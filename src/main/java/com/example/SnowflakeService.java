@@ -303,10 +303,26 @@ public class SnowflakeService {
             // Download file from S3 using existing service
             byte[] fileContent = s3Service.downloadFile(s3Key);
             
-            // Create temporary file
+            // Create temporary file with exact filename (no prefix)
             String fileName = s3Key.substring(s3Key.lastIndexOf("/") + 1);
-            tempFile = java.io.File.createTempFile("s3_download_", "_" + fileName);
+            java.io.File tempDir = java.io.File.createTempFile("snowflake_upload_", "");
+            tempDir.delete(); // Delete the file
+            tempDir.mkdirs(); // Create as directory
+            tempFile = new java.io.File(tempDir, fileName);
+            
+            // Write file content preserving original data
             java.nio.file.Files.write(tempFile.toPath(), fileContent);
+            
+            // Verify file integrity
+            byte[] writtenContent = java.nio.file.Files.readAllBytes(tempFile.toPath());
+            if (writtenContent.length != fileContent.length) {
+                logger.error("File corruption detected! Original: {} bytes, Written: {} bytes", 
+                           fileContent.length, writtenContent.length);
+                throw new SQLException("File corruption during download/write process");
+            }
+            
+            logger.info("Downloaded file: {} ({} bytes) to temp file: {} - Integrity verified", 
+                       fileName, fileContent.length, tempFile.getAbsolutePath());
             
             // Use PUT command to upload file to Snowflake stage
             String putCommand = String.format("PUT 'file://%s' %s AUTO_COMPRESS=FALSE OVERWRITE=TRUE", 
@@ -323,12 +339,22 @@ public class SnowflakeService {
             logger.error("Failed to copy file from S3 to Snowflake stage", e);
             throw new SQLException("Failed to copy file from S3 to Snowflake stage", e);
         } finally {
-            // Clean up temporary file
+            // Clean up temporary file and directory
             if (tempFile != null && tempFile.exists()) {
                 if (tempFile.delete()) {
                     logger.debug("Cleaned up temporary file: {}", tempFile.getAbsolutePath());
                 } else {
                     logger.warn("Failed to delete temporary file: {}", tempFile.getAbsolutePath());
+                }
+                
+                // Clean up temp directory
+                java.io.File tempDir = tempFile.getParentFile();
+                if (tempDir != null && tempDir.exists()) {
+                    if (tempDir.delete()) {
+                        logger.debug("Cleaned up temporary directory: {}", tempDir.getAbsolutePath());
+                    } else {
+                        logger.warn("Failed to delete temporary directory: {}", tempDir.getAbsolutePath());
+                    }
                 }
             }
         }
