@@ -37,13 +37,18 @@ class SnowflakeService(snowflakeConfig: SnowflakeConfig) {
           logger.info("Warehouse: {}", validConfig.warehouse)
           logger.info("Role: {}", validConfig.role)
 
-          // Set connection properties with timeouts
+          // Set connection properties with timeouts and proxy settings
           val props = new Properties()
           props.setProperty("user", validConfig.user)
           props.setProperty("password", validConfig.password)
           props.setProperty("loginTimeout", "30")
           props.setProperty("networkTimeout", "30000")
           props.setProperty("queryTimeout", "300")
+          
+          // Proxy settings (uncomment and configure as needed)
+          // props.setProperty("useProxy", "true")
+          // props.setProperty("proxyHost", "your-proxy-host")
+          // props.setProperty("proxyPort", "8080")
           
           val conn = DriverManager.getConnection(jdbcUrl, props)
           connection = Some(conn)

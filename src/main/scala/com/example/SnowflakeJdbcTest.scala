@@ -81,6 +81,11 @@ object SnowflakeJdbcTest {
       props.setProperty("loginTimeout", "30")
       props.setProperty("networkTimeout", "30000")
       
+      // Proxy settings (uncomment and configure as needed)
+      // props.setProperty("useProxy", "true")
+      // props.setProperty("proxyHost", "your-proxy-host")
+      // props.setProperty("proxyPort", "8080")
+      
       DriverManager.getConnection(url, props)
     } match {
       case Success(conn) => 

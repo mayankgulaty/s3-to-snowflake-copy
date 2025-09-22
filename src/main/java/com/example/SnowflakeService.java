@@ -49,13 +49,18 @@ public class SnowflakeService {
         logger.info("Warehouse: {}", snowflakeConfig.getWarehouse());
         logger.info("Role: {}", snowflakeConfig.getRole());
 
-        // Set connection properties with timeouts
+        // Set connection properties with timeouts and proxy settings
         java.util.Properties props = new java.util.Properties();
         props.setProperty("user", snowflakeConfig.getUser());
         props.setProperty("password", snowflakeConfig.getPassword());
         props.setProperty("loginTimeout", "30");
         props.setProperty("networkTimeout", "30000");
         props.setProperty("queryTimeout", "300");
+        
+        // Proxy settings (uncomment and configure as needed)
+        // props.setProperty("useProxy", "true");
+        // props.setProperty("proxyHost", "your-proxy-host");
+        // props.setProperty("proxyPort", "8080");
         
         this.connection = DriverManager.getConnection(jdbcUrl, props);
         
