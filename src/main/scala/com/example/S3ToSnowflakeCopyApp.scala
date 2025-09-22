@@ -1,5 +1,6 @@
 package com.example
 
+import com.example.S3FileService
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.util.{Failure, Success, Try}
@@ -125,7 +126,7 @@ object S3ToSnowflakeCopyApp {
   /**
    * Test both S3 and Snowflake connections
    */
-  private def testConnections(s3Service: CompatibleS3Service, snowflakeService: SnowflakeService): Try[Unit] = {
+  private def testConnections(s3Service: S3FileService, snowflakeService: SnowflakeService): Try[Unit] = {
     logger.info("Testing connections...")
     
     for {
@@ -142,10 +143,11 @@ object S3ToSnowflakeCopyApp {
   private def testS3Connection(s3Service: S3FileService): Try[Unit] = {
     logger.info("Testing S3 connection...")
     
-    s3Service.listObjects() match {
-      case Success(objects) => 
-        logger.info("✅ S3 connection successful. Found {} objects", objects.length)
-        Success(())
+    Try {
+      val objects = s3Service.listObjects()
+      logger.info("✅ S3 connection successful. Found {} objects", objects.length)
+    } match {
+      case Success(_) => Success(())
       case Failure(e) => 
         logger.error("❌ S3 connection failed", e)
         Failure(e)
@@ -204,11 +206,13 @@ object S3ToSnowflakeCopyApp {
    * List files in S3 bucket
    */
   def listS3Files(s3Service: S3FileService): Try[List[String]] = {
-    s3Service.listObjects() match {
-      case Success(objects) => 
-        val fileKeys = objects.map(_.getKey)
-        logger.info("Found {} files in S3 bucket", fileKeys.length)
-        Success(fileKeys)
+    Try {
+      val objects = s3Service.listObjects()
+      val fileKeys = objects.map(_.getKey)
+      logger.info("Found {} files in S3 bucket", fileKeys.length)
+      fileKeys
+    } match {
+      case Success(fileKeys) => Success(fileKeys)
       case Failure(e) => 
         logger.error("Failed to list S3 files", e)
         Failure(e)
