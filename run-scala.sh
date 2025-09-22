@@ -34,7 +34,7 @@ echo "✅ Compilation successful"
 echo
 
 echo "🚀 Running Scala S3 to Snowflake Copy..."
-echo "   Make sure to update the configuration in S3ToSnowflakeCopyCompatible.scala first"
+echo "   Make sure to update the configuration in S3ToSnowflakeCopyApp.scala first"
 echo
 
-scala -cp ".:$CLASSPATH" com.example.S3ToSnowflakeCopyCompatible
+scala -cp ".:$CLASSPATH" com.example.S3ToSnowflakeCopyApp

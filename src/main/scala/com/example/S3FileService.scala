@@ -12,13 +12,13 @@ import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
 
 /**
- * Scala version of CompatibleS3Service
+ * Scala S3FileService - Handles file operations with S3
  * Uses AWS SDK v1 and matches your existing configuration
  */
-class CompatibleS3Service(accessKey: String, secretKey: String, endpoint: String, 
-                         bucketName: String, bucketPath: String) {
+class S3FileService(accessKey: String, secretKey: String, endpoint: String, 
+                   bucketName: String, bucketPath: String) {
   
-  private val logger: Logger = LoggerFactory.getLogger(classOf[CompatibleS3Service])
+  private val logger: Logger = LoggerFactory.getLogger(classOf[S3FileService])
   private val s3Client: AmazonS3 = createS3Client(accessKey, secretKey, endpoint)
 
   /**

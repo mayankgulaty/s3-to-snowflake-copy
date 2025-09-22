@@ -5,10 +5,10 @@ import org.slf4j.{Logger, LoggerFactory}
 import scala.util.{Failure, Success, Try}
 
 /**
- * Scala version of S3ToSnowflakeCopyCompatible
- * Main application for copying files from S3 to Snowflake using existing S3 service
+ * Scala S3ToSnowflakeCopyApp - Main application for copying files from S3 to Snowflake
+ * Uses S3FileService for S3 operations and SnowflakeService for Snowflake operations
  */
-object S3ToSnowflakeCopyCompatible {
+object S3ToSnowflakeCopyApp {
   
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
@@ -85,10 +85,10 @@ object S3ToSnowflakeCopyCompatible {
   /**
    * Create S3 service
    */
-  private def createS3Service(config: S3Config): Try[CompatibleS3Service] = {
+  private def createS3Service(config: S3Config): Try[S3FileService] = {
     Try {
       logger.info("Creating S3 service with endpoint: {}", config.endpoint)
-      new CompatibleS3Service(
+      new S3FileService(
         config.accessKey,
         config.secretKey,
         config.endpoint,
@@ -139,7 +139,7 @@ object S3ToSnowflakeCopyCompatible {
   /**
    * Test S3 connection
    */
-  private def testS3Connection(s3Service: CompatibleS3Service): Try[Unit] = {
+  private def testS3Connection(s3Service: S3FileService): Try[Unit] = {
     logger.info("Testing S3 connection...")
     
     s3Service.listObjects() match {
@@ -174,7 +174,7 @@ object S3ToSnowflakeCopyCompatible {
   /**
    * Copy file from S3 to Snowflake
    */
-  private def copyFileFromS3ToSnowflake(s3Service: CompatibleS3Service, 
+  private def copyFileFromS3ToSnowflake(s3Service: S3FileService, 
                                        snowflakeService: SnowflakeService,
                                        s3Key: String, 
                                        stagePath: String): Try[Unit] = {
@@ -203,7 +203,7 @@ object S3ToSnowflakeCopyCompatible {
   /**
    * List files in S3 bucket
    */
-  def listS3Files(s3Service: CompatibleS3Service): Try[List[String]] = {
+  def listS3Files(s3Service: S3FileService): Try[List[String]] = {
     s3Service.listObjects() match {
       case Success(objects) => 
         val fileKeys = objects.map(_.getKey)
@@ -218,7 +218,7 @@ object S3ToSnowflakeCopyCompatible {
   /**
    * Copy multiple files from S3 to Snowflake
    */
-  def copyMultipleFiles(s3Service: CompatibleS3Service, 
+  def copyMultipleFiles(s3Service: S3FileService, 
                        snowflakeService: SnowflakeService,
                        s3Keys: List[String], 
                        stagePath: String): Try[List[Unit]] = {

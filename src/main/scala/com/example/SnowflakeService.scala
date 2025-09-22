@@ -91,9 +91,9 @@ class SnowflakeService(snowflakeConfig: SnowflakeConfig) {
   }
 
   /**
-   * Copy file from S3 to Snowflake Internal Stage using existing CompatibleS3Service
+   * Copy file from S3 to Snowflake Internal Stage using existing S3FileService
    */
-  def copyFileFromS3ToStage(stagePath: String, s3Service: CompatibleS3Service, s3Key: String): Try[Unit] = {
+  def copyFileFromS3ToStage(stagePath: String, s3Service: S3FileService, s3Key: String): Try[Unit] = {
     logger.info("Copying FILE from S3 to Snowflake Internal Stage: {} -> {}", s3Key, stagePath)
     
     for {
