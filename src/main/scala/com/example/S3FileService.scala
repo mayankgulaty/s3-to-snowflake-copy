@@ -1,4 +1,4 @@
-package com.example
+package com.citi.spaas.spark
 
 import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials}
 import com.amazonaws.client.builder.AwsClientBuilder

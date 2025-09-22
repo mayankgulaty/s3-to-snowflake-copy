@@ -1,4 +1,4 @@
-package com.example
+package com.citi.spaas.spark
 
 import org.slf4j.{Logger, LoggerFactory}
 

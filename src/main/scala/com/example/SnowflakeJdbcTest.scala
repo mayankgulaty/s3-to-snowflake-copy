@@ -1,4 +1,4 @@
-package com.example
+package com.citi.spaas.spark
 
 import java.sql.{Connection, DriverManager, SQLException}
 import java.util.Properties

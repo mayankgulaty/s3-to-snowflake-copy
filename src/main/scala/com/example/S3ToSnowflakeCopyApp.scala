@@ -1,6 +1,6 @@
-package com.example
+package com.citi.spaas.spark
 
-import com.example.S3FileService
+import com.citi.spaas.spark.S3FileService
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.util.{Failure, Success, Try}

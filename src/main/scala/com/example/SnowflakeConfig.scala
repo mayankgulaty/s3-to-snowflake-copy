@@ -1,4 +1,4 @@
-package com.example
+package com.citi.spaas.spark
 
 /**
  * Scala case class for Snowflake connection configuration
