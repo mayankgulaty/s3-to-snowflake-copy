@@ -254,7 +254,7 @@ class SnowflakeService(snowflakeConfig: SnowflakeConfig) {
     } match {
       case Success(_) => Success(())
       case Failure(e) => 
-        logger.error("Failed to execute SQL: {}", sql, e)
+        logger.error(s"Failed to execute SQL: $sql", e)
         Failure(e)
     }
   }
