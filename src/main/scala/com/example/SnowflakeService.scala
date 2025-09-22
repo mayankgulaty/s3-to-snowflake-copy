@@ -203,7 +203,13 @@ class SnowflakeService(snowflakeConfig: SnowflakeConfig) {
   }
 
   private def uploadFileToStage(stagePath: String, tempFile: File): Try[Unit] = {
-    val putCommand = s"PUT 'file://${tempFile.getAbsolutePath}' $stagePath AUTO_COMPRESS=FALSE OVERWRITE=TRUE"
+    // Ensure stage path has @ symbol for PUT command
+    val stageRef = if (stagePath.startsWith("@")) {
+      stagePath
+    } else {
+      s"@$stagePath"
+    }
+    val putCommand = s"PUT 'file://${tempFile.getAbsolutePath}' $stageRef AUTO_COMPRESS=FALSE OVERWRITE=TRUE"
     logger.info("Executing PUT command: {}", putCommand)
     
     for {
