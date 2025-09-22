@@ -167,7 +167,7 @@ class SnowflakeService(snowflakeConfig: SnowflakeConfig) {
     val createStageSQL = s"CREATE STAGE IF NOT EXISTS $stageName"
     
     logger.info("Creating stage: {}", createStageSQL)
-    logger.info("Original stage path: {}, Cleaned stage name: {}", stagePath, stageName)
+    logger.info(s"Original stage path: $stagePath, Cleaned stage name: $stageName")
     
     for {
       conn <- ensureConnection()
