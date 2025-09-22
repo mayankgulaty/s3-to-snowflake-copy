@@ -29,13 +29,20 @@ class SnowflakeService(snowflakeConfig: SnowflakeConfig) {
         Failure(new SQLException(s"Invalid configuration: $error"))
       case Right(validConfig) =>
         Try {
+          // Ensure Snowflake JDBC driver is loaded
+          Class.forName("net.snowflake.client.jdbc.SnowflakeDriver")
+          logger.info("Snowflake JDBC driver loaded successfully")
+          
           val jdbcUrl = validConfig.getJdbcUrl
-          logger.info("Using JDBC URL: {}", jdbcUrl)
+          logger.info("=== Snowflake Connection Debug Info ===")
+          logger.info("Original URL from config: {}", validConfig.url)
+          logger.info("Final JDBC URL: {}", jdbcUrl)
           logger.info("User: {}", validConfig.user)
           logger.info("Database: {}", validConfig.database)
           logger.info("Schema: {}", validConfig.schema)
           logger.info("Warehouse: {}", validConfig.warehouse)
           logger.info("Role: {}", validConfig.role)
+          logger.info("======================================")
 
           // Set connection properties with timeouts and proxy settings
           val props = new Properties()

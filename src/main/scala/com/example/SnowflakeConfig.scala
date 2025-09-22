@@ -48,14 +48,18 @@ case class SnowflakeConfig(
   }
   
   /**
-   * Get JDBC URL with parameters
+   * Get JDBC URL with parameters (matches Java logic)
    */
   def getJdbcUrl: String = {
-    if (url.contains("?")) {
-      url
-    } else {
-      s"$url?db=$database&schema=$schema&warehouse=$warehouse&role=$role"
+    // Use the URL directly from config - it should already be properly formatted
+    var jdbcUrl = url
+    
+    // Add query parameters if they're not already in the URL
+    if (!jdbcUrl.contains("?")) {
+      jdbcUrl = s"$url?db=$database&schema=$schema&warehouse=$warehouse&role=$role"
     }
+    
+    jdbcUrl
   }
   
   override def toString: String = {
