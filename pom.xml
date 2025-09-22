@@ -17,7 +17,14 @@
     </properties>
 
     <dependencies>
-        <!-- AWS SDK for S3 -->
+        <!-- AWS SDK v1 for S3 (used by Scala files) -->
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-s3</artifactId>
+            <version>1.12.565</version>
+        </dependency>
+        
+        <!-- AWS SDK v2 for S3 (if needed by Java files) -->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>s3</artifactId>
