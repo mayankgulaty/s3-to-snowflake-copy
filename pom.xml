@@ -89,7 +89,7 @@
                         <configuration>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.example.S3ToSnowflakeCopy</mainClass>
+                                    <mainClass>com.citi.spaas.spark.S3ToSnowflakeCopyApp</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
