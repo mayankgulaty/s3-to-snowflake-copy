@@ -120,7 +120,7 @@ class S3FileService(accessKey: String, secretKey: String, endpoint: String,
     } match {
       case Success(content) => Success(content)
       case Failure(e) => 
-        logger.error("Failed to download file: {}", s3Key, e.asInstanceOf[Object])
+        logger.error(s"Failed to download file: $s3Key", e)
         Failure(e)
     }
   }
@@ -147,7 +147,7 @@ class S3FileService(accessKey: String, secretKey: String, endpoint: String,
     } match {
       case Success(_) => Success(())
       case Failure(e) => 
-        logger.error("Failed to upload file: {}", s3Key, e.asInstanceOf[Object])
+        logger.error(s"Failed to upload file: $s3Key", e)
         Failure(e)
     }
   }
@@ -170,7 +170,7 @@ class S3FileService(accessKey: String, secretKey: String, endpoint: String,
     } match {
       case Success(metadata) => Success(metadata)
       case Failure(e) => 
-        logger.error("Failed to get metadata for: {}", s3Key, e.asInstanceOf[Object])
+        logger.error(s"Failed to get metadata for: $s3Key", e)
         Failure(e)
     }
   }
@@ -187,7 +187,7 @@ class S3FileService(accessKey: String, secretKey: String, endpoint: String,
     } match {
       case Success(_) => Success(())
       case Failure(e) => 
-        logger.error("Failed to delete object: {}", s3Key, e.asInstanceOf[Object])
+        logger.error(s"Failed to delete object: $s3Key", e)
         Failure(e)
     }
   }
