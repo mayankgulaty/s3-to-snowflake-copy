@@ -156,10 +156,18 @@ class SnowflakeService(snowflakeConfig: SnowflakeConfig) {
   }
 
   private def createStageIfNotExists(stagePath: String): Try[Unit] = {
-    val stageName = stagePath.split("/")(0)
+    // Extract stage name and remove @ symbol if present
+    val rawStageName = stagePath.split("/")(0)
+    val stageName = if (rawStageName.startsWith("@")) {
+      rawStageName.substring(1) // Remove @ symbol
+    } else {
+      rawStageName
+    }
+    
     val createStageSQL = s"CREATE STAGE IF NOT EXISTS $stageName"
     
     logger.info("Creating stage: {}", createStageSQL)
+    logger.info("Original stage path: {}, Cleaned stage name: {}", stagePath, stageName)
     
     for {
       conn <- ensureConnection()
