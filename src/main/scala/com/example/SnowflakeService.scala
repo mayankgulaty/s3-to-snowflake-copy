@@ -62,7 +62,7 @@ class SnowflakeService(snowflakeConfig: SnowflakeConfig) {
    * Upload file to Snowflake Internal Stage (for local files only)
    */
   def uploadToStage(stagePath: String, fileName: String, fileContent: Array[Byte]): Try[Unit] = {
-    logger.info("Uploading file {} to Snowflake Internal Stage: {}", fileName, stagePath)
+    logger.info(s"Uploading file $fileName to Snowflake Internal Stage: $stagePath")
     
     for {
       _ <- ensureConnection()
@@ -71,7 +71,7 @@ class SnowflakeService(snowflakeConfig: SnowflakeConfig) {
       _ <- uploadFileToStage(stagePath, tempFile)
       _ <- cleanupTempFile(tempFile)
     } yield {
-      logger.info("✅ Successfully uploaded file {} to stage {}", fileName, stagePath)
+      logger.info(s"✅ Successfully uploaded file $fileName to stage $stagePath")
     }
   }
 
@@ -79,14 +79,14 @@ class SnowflakeService(snowflakeConfig: SnowflakeConfig) {
    * Upload file directly to Snowflake Internal Stage using file path
    */
   def uploadFileToStage(stagePath: String, filePath: String): Try[Unit] = {
-    logger.info("Uploading file {} to Snowflake Internal Stage: {}", filePath, stagePath)
+    logger.info(s"Uploading file $filePath to Snowflake Internal Stage: $stagePath")
     
     for {
       _ <- ensureConnection()
       _ <- createStageIfNotExists(stagePath)
       _ <- uploadFileToStage(stagePath, new File(filePath))
     } yield {
-      logger.info("✅ Successfully uploaded file {} to stage {}", filePath, stagePath)
+      logger.info(s"✅ Successfully uploaded file $filePath to stage $stagePath")
     }
   }
 
@@ -94,7 +94,7 @@ class SnowflakeService(snowflakeConfig: SnowflakeConfig) {
    * Copy file from S3 to Snowflake Internal Stage using existing S3FileService
    */
   def copyFileFromS3ToStage(stagePath: String, s3Service: S3FileService, s3Key: String): Try[Unit] = {
-    logger.info("Copying FILE from S3 to Snowflake Internal Stage: {} -> {}", s3Key, stagePath)
+    logger.info(s"Copying FILE from S3 to Snowflake Internal Stage: $s3Key -> $stagePath")
     
     for {
       _ <- ensureConnection()
@@ -172,8 +172,7 @@ class SnowflakeService(snowflakeConfig: SnowflakeConfig) {
         throw new SQLException(s"File corruption detected! Original: ${fileContent.length} bytes, Written: ${writtenContent.length} bytes")
       }
       
-      logger.info("Downloaded file: {} ({} bytes) to temp file: {} - Integrity verified", 
-                 fileName, fileContent.length, tempFile.getAbsolutePath)
+      logger.info(s"Downloaded file: $fileName (${fileContent.length} bytes) to temp file: ${tempFile.getAbsolutePath} - Integrity verified")
       tempFile
     }
   }
