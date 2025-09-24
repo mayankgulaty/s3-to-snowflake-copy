@@ -13,7 +13,17 @@ object S3ToSnowflakeCopyApp {
   
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
+  /**
+   * Main entry point for standalone execution
+   */
   def main(args: Array[String]): Unit = {
+    runDefaultCopy()
+  }
+
+  /**
+   * Execute the default S3 to Snowflake copy operation
+   */
+  def runDefaultCopy(): Try[Unit] = {
     logger.info("=== S3 to Snowflake Copy Compatible (Scala) ===")
     
     // Configuration - UPDATE THESE VALUES
@@ -42,10 +52,40 @@ object S3ToSnowflakeCopyApp {
     result match {
       case Success(_) => 
         logger.info("✅ S3 to Snowflake copy completed successfully!")
-        System.exit(0)
+        result
       case Failure(e) => 
         logger.error("❌ S3 to Snowflake copy failed", e)
-        System.exit(1)
+        result
+    }
+  }
+
+  /**
+   * Execute S3 to Snowflake copy with custom parameters
+   */
+  def runCopyWithParams(s3AccessKey: String, s3SecretKey: String, s3Endpoint: String,
+                       s3Bucket: String, s3BucketPath: String, s3Key: String,
+                       snowflakePassword: String, snowflakeStagePath: String): Try[Unit] = {
+    logger.info("=== S3 to Snowflake Copy with Custom Parameters ===")
+    
+    // Create configurations
+    val s3Config = createS3Config(s3AccessKey, s3SecretKey, s3Endpoint, s3Bucket, s3BucketPath)
+    val snowflakeConfig = createSnowflakeConfig(snowflakePassword)
+    
+    // Run the copy process
+    val result = for {
+      s3Service <- createS3Service(s3Config)
+      snowflakeService <- createSnowflakeService(snowflakeConfig)
+      _ <- testConnections(s3Service, snowflakeService)
+      _ <- copyFileFromS3ToSnowflake(s3Service, snowflakeService, s3Key, snowflakeStagePath)
+    } yield ()
+    
+    result match {
+      case Success(_) => 
+        logger.info("✅ S3 to Snowflake copy completed successfully!")
+        result
+      case Failure(e) => 
+        logger.error("❌ S3 to Snowflake copy failed", e)
+        result
     }
   }
 
