@@ -14,17 +14,6 @@ case class SnowflakeConfig(
   warehouse: String
 ) {
   
-  /**
-   * Create a copy with updated password (for security)
-   */
-  def withPassword(newPassword: String): SnowflakeConfig = 
-    this.copy(password = newPassword)
-  
-  /**
-   * Create a copy with hidden password for logging
-   */
-  def forLogging: SnowflakeConfig = 
-    this.copy(password = "[HIDDEN]")
   
   /**
    * Validate configuration
